@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Client {
 
-  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
+  private static final long TOTAL_SIZE = 1024*10; // 10K
   private static final Integer ACK_BYTE = 123;
 
   public enum TransportProtocol {
@@ -132,7 +132,9 @@ public class Client {
     long start = System.currentTimeMillis();
 
     while (totalBytesSent < TOTAL_SIZE) {
+      System.out.print("Sending " + outputMessageSize + " bytes to server...");
       outputStream.write(outputBuffer);
+      System.out.println("Done.");
       totalBytesSent += outputMessageSize;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
         System.out.println("Waiting for ack..."); // todo: remove
@@ -170,5 +172,6 @@ public class Client {
     System.out.println("transport protocol: \"tcp\" or \"udp\"");
     System.out.println("acknowledgement protocol: \"streaming\" or \"stopandwait\"");
     System.out.println("message size: 0 <= n <= 16 (2^n)");
+    System.exit(0);
   }
 }

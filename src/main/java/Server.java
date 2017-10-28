@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server {
 
-  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
+  private static final long TOTAL_SIZE = 1024*10; // 10K
   private static final Integer ACK_BYTE = 123;
 
   public static byte[] dataBuffer = new byte[65536];
