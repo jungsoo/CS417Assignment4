@@ -1,10 +1,10 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 
 public class Client {
 
   private static final long TOTAL_SIZE = 10;
-  private static final Integer ACK_BYTE = 255;
+  private static final Integer ACK_BYTE = 123;
 
   public enum TransportProtocol {
     TCP, UDP
@@ -14,31 +14,36 @@ public class Client {
     STREAMING, STOPANDWAIT
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     if (args.length != 5) {
       printUsage();
     }
 
+    InetAddress address = null;
+    int port = 0;
+    TransportProtocol transportProtocol = null;
+    AckProtocol ackProtocol = null;
+    int messageSize = 0;
+
     try {
-      InetAddress address = InetAddress.getByName(args[0]);
-      int port = Integer.parseInt(args[1]);
-      TransportProtocol transportProtocol = TransportProtocol.valueOf(args[2]);
-      AckProtocol ackProtocol = AckProtocol.valueOf(args[3]);
-      int messageSize = Integer.parseInt(args[4]);
+      address = InetAddress.getByName(args[0]);
+      port = Integer.parseInt(args[1]);
+      transportProtocol = TransportProtocol.valueOf(args[2].toUpperCase());
+      ackProtocol = AckProtocol.valueOf(args[3].toUpperCase());
+      messageSize = Integer.parseInt(args[4]);
+    } catch (Exception e) {
+      printUsage();
+    }
 
-      if (messageSize < 0 || messageSize > 16) {
+    if (messageSize < 0 || messageSize > 16) {
         printUsage();
-      }
+    }
 
-      if (transportProtocol == TransportProtocol.TCP) {
+    if (transportProtocol == TransportProtocol.TCP) {
         runTcp(address, port, ackProtocol, messageSize);
       } else {
         runUdp(address, port, ackProtocol, messageSize);
       }
-
-    } catch (Exception e) {
-      printUsage();
-    }
   }
 
   private static void runUdp(InetAddress address,
@@ -47,10 +52,7 @@ public class Client {
                              Integer messageSize) throws IOException {
 
     DatagramSocket socket = new DatagramSocket(port);
-    byte[] applicationMessage = new byte[3];
-    applicationMessage[0] = messageSize.byteValue();
-    applicationMessage[1] = Integer.valueOf(ackProtocol ==  AckProtocol.STOPANDWAIT ? 1 : 0).byteValue();
-    applicationMessage[2] = Integer.valueOf(applicationMessage[0] + applicationMessage[1]).byteValue();
+    byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
 
     DatagramPacket applicationMessagePacket = new DatagramPacket(
         applicationMessage,
@@ -79,7 +81,7 @@ public class Client {
       count -= messageSize;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
         socket.receive(ackPacket);
-        if (ackPacket.getData()[0] == 255) {
+        if (ackPacket.getData()[0] == ACK_BYTE) {
           continue;
         } else {
           System.err.println("Received response, but not ack byte");
@@ -90,7 +92,56 @@ public class Client {
     System.out.println(System.currentTimeMillis() - start);
   }
 
-  private static void runTcp(InetAddress address, int port, AckProtocol ackProtocol, int messageSize) {
+  private static void runTcp(InetAddress address, int port, AckProtocol ackProtocol, int messageSize)  throws IOException {
+    System.out.print("Connecting to server " + address + ":" + port + " over TCP... ");
+    Socket socket = new Socket(address, port);
+    System.out.println("Connected.");
+
+    InputStream inputStream = socket.getInputStream();
+    OutputStream outputStream = socket.getOutputStream();
+
+    int outputMessageSize = (int) Math.pow(2, messageSize);
+
+    System.out.println("Trial configuration: { message size: " + outputMessageSize + " bytes; protocol: " + ackProtocol + " }");
+    System.out.print("Sending configuration to server... ");
+    byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
+    outputStream.write(applicationMessage);
+    System.out.println("Done.");
+
+    byte[] inputBuffer = new byte[10];
+    byte[] outputBuffer = new byte[outputMessageSize];
+    long totalBytesSent = 0;
+
+    System.out.print("Starting data transfer to server... ");
+    long start = System.currentTimeMillis();
+
+    while (totalBytesSent < TOTAL_SIZE) {
+      outputStream.write(outputBuffer);
+      totalBytesSent += outputMessageSize;
+      if (ackProtocol == AckProtocol.STOPANDWAIT) {
+        System.out.println("Waiting for ack..."); // todo: remove
+        int bytesReceived = inputStream.read(inputBuffer);
+        System.out.println("Got " + bytesReceived + " byte ack..."); // todo: remove
+        if (inputBuffer[0] != ACK_BYTE) {
+          System.err.println("Error: expected ack from server, received something else.");
+          System.err.println("ack received: " + inputBuffer[0]);
+          System.exit(1);
+        }
+      }
+    }
+
+    long end = System.currentTimeMillis();
+    System.out.println("Done (took " + (start-end) + " ms).");
+    socket.close();
+    System.out.println("Goodbye");
+  }
+
+  private static byte[] createApplicationMessage(int messageSize, AckProtocol ackProtocol) {
+    byte[] ret = new byte[3];
+    ret[0] = (byte)messageSize;
+    ret[1] = (ackProtocol == AckProtocol.STOPANDWAIT) ? (byte)1 : (byte)0;
+    ret[2] = (byte)(ret[0] + ret[1]);
+    return ret;
   }
 
   private static void printUsage() {

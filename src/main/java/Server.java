@@ -4,7 +4,7 @@ import java.net.*;
 public class Server {
 
   private static final long TOTAL_SIZE = 10;
-  private static final Integer ACK_BYTE = 255;
+  private static final Integer ACK_BYTE = 123;
 
   public static byte[] dataBuffer = new byte[65536];
   public static byte[] applicationMessage = new byte[3];
@@ -76,6 +76,7 @@ public class Server {
             System.out.println("Received " + dataCount + " bytes"); // todo: remove
             totalBytesRead += dataCount;
             if (acknowledge) {
+              System.out.println("Sending ack"); // todo: remove
               outputStream.write(ACK_BYTE);
             }
           }
