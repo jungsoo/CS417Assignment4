@@ -83,7 +83,6 @@ public class Server {
 
           System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
         }
-
       }
 
       clientSocket.close();
@@ -98,7 +97,7 @@ public class Server {
     DatagramPacket applicationMessagePacket = new DatagramPacket(applicationMessage, applicationMessage.length);
     DatagramPacket messagePacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
-    while(true) {
+    while (true) {
       System.out.println("\nWaiting for client to connect...");
       socket.receive(applicationMessagePacket);
 
@@ -112,7 +111,7 @@ public class Server {
         boolean acknowledge = applicationMessage[1] != 0;
         int checksum = applicationMessage[2];
 
-        byte[] ackByte = { ACK_BYTE.byteValue() };
+        byte[] ackByte = {ACK_BYTE.byteValue()};
         DatagramPacket ackPacket = new DatagramPacket(ackByte, 0, ackByte.length, applicationMessagePacket.getAddress(), port);
 
 
@@ -141,9 +140,9 @@ public class Server {
           }
 
           System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
+        }
       }
 
-      socket.close();
       System.out.println("======== Closed connection to client ==========");
     }
   }
