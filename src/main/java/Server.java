@@ -69,10 +69,6 @@ public class Server {
 
           while (totalBytesRead < TOTAL_SIZE) {
             int dataCount = inputStream.read(dataBuffer);
-            if (dataCount != messageSize) {
-              System.out.println("Error: message was not agreed-upon size (received " + dataCount + " bytes)");
-              break;
-            }
             System.out.println("Received " + dataCount + " bytes"); // todo: remove
             totalBytesRead += dataCount;
             if (acknowledge) {
