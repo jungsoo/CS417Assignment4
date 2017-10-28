@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server {
 
-  private static final long TOTAL_SIZE = 10;
+  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
   private static final Integer ACK_BYTE = 123;
 
   public static byte[] dataBuffer = new byte[65536];
@@ -98,15 +98,15 @@ public class Server {
     DatagramPacket messagePacket = new DatagramPacket(dataBuffer, dataBuffer.length);
 
     while (true) {
-      System.out.println("\nWaiting for client to connect...");
+      System.out.println("\nWaiting for client...");
       socket.receive(applicationMessagePacket);
-
+      System.out.println("Received " + applicationMessagePacket.getLength() + " bytes from client.");
+      
       if (applicationMessagePacket.getLength() != 3) {
         System.out.println(String.format(
             "Error: expected 3 byte message from client but only received %d. Try again.",
             applicationMessagePacket.getLength()));
       } else {
-        System.out.println("Received " + applicationMessagePacket.getLength() + " bytes from client.");
         int messageSize = (int) Math.pow(2, applicationMessage[0]);
         boolean acknowledge = applicationMessage[1] != 0;
         int checksum = applicationMessage[2];

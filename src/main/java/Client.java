@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Client {
 
-  private static final long TOTAL_SIZE = 10;
+  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
   private static final Integer ACK_BYTE = 123;
 
   public enum TransportProtocol {
@@ -51,19 +51,30 @@ public class Client {
                              AckProtocol ackProtocol,
                              Integer messageSize) throws IOException {
 
+    System.out.print("Connecting to server " + address + " port " + port + " over UDP... ");
     DatagramSocket socket = new DatagramSocket(port);
-    byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
+    System.out.println("Done.");
 
+    int outputMessageSize = (int) Math.pow(2, messageSize);
+
+    System.out.println("Trial configuration: { message size: " + outputMessageSize + " bytes; protocol: " + ackProtocol + " }");
+    System.out.print("Sending configuration to server... ");
+    byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
     DatagramPacket applicationMessagePacket = new DatagramPacket(
         applicationMessage,
         0,
         applicationMessage.length,
         address,
         port);
+    socket.send(applicationMessagePacket);
+    System.out.println("Done.");
+
+
+
     DatagramPacket messagePacket = new DatagramPacket(
-        new byte[messageSize],
+        new byte[outputMessageSize],
         0,
-        messageSize,
+        outputMessageSize,
         address,
         port
     );
@@ -72,28 +83,33 @@ public class Client {
         1
     );
 
-    socket.send(applicationMessagePacket);
+    System.out.print("Starting data transfer to server... ");
 
     long start = System.currentTimeMillis();
     long count = TOTAL_SIZE;
     while (count > 0) {
       socket.send(messagePacket);
-      count -= messageSize;
+      count -= outputMessageSize;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
+        System.out.println("Waiting for ack..."); // todo: remove
         socket.receive(ackPacket);
+        System.out.println("Got ack..."); // todo: remove
         if (ackPacket.getData()[0] == ACK_BYTE) {
           continue;
         } else {
-          System.err.println("Received response, but not ack byte");
+          System.err.println("Error: expected ack from server, received something else.");
+          System.err.println("ack received: " + ackPacket.getData()[0]); // todo: remove
           System.exit(1);
         }
       }
     }
-    System.out.println(System.currentTimeMillis() - start);
+
+    long end = System.currentTimeMillis();
+    System.out.println("Done (took " + (end-start) + " ms).");
   }
 
   private static void runTcp(InetAddress address, int port, AckProtocol ackProtocol, int messageSize)  throws IOException {
-    System.out.print("Connecting to server " + address + ":" + port + " over TCP... ");
+    System.out.print("Connecting to server " + address + " port " + port + " over TCP... ");
     Socket socket = new Socket(address, port);
     System.out.println("Connected.");
 
@@ -124,14 +140,14 @@ public class Client {
         System.out.println("Got " + bytesReceived + " byte ack..."); // todo: remove
         if (inputBuffer[0] != ACK_BYTE) {
           System.err.println("Error: expected ack from server, received something else.");
-          System.err.println("ack received: " + inputBuffer[0]);
+          System.err.println("ack received: " + inputBuffer[0]); // todo: remove
           System.exit(1);
         }
       }
     }
 
     long end = System.currentTimeMillis();
-    System.out.println("Done (took " + (start-end) + " ms).");
+    System.out.println("Done (took " + (end-start) + " ms).");
     socket.close();
     System.out.println("Goodbye");
   }
