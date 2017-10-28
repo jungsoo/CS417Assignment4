@@ -128,10 +128,6 @@ public class Server {
 
           while (totalBytesRead < TOTAL_SIZE) {
             socket.receive(messagePacket);
-            if (messagePacket.getLength() != messageSize) {
-              System.out.println("Error: message was not agreed-upon size (received " + messagePacket.getLength() + " bytes)");
-              break;
-            }
             System.out.println("Received " + messagePacket.getLength() + " bytes"); // todo: remove
             totalBytesRead += messagePacket.getLength();
             if (acknowledge) {
