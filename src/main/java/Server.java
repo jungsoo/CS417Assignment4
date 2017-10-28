@@ -10,8 +10,7 @@ public class Server {
   public static byte[] applicationMessage = new byte[3];
 
   public enum TransportProtocol {
-    TCP,
-    UDP
+    TCP, UDP
   }
 
   public static void main(String[] args) throws IOException {
@@ -19,7 +18,7 @@ public class Server {
       printUsage();
     }
 
-    int port = 44444;
+    int port = 0;
     TransportProtocol transportProtocol = TransportProtocol.TCP;
 
     try {
