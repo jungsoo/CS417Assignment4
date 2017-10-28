@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server {
 
-  private static final long TOTAL_SIZE = 1024*10; // 10K
+  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
   private static final Integer ACK_BYTE = 123;
 
   public static byte[] dataBuffer = new byte[65536];
@@ -59,20 +59,15 @@ public class Server {
         if (checksum != applicationMessage[0] + applicationMessage[1]) {
           System.out.println("Improper message from client: bad checksum");
         } else {
-          System.out.println("Client has requested:");
-          System.out.println("Message size: " + messageSize + " bytes");
-          System.out.println("Acknowledgement protocol: " + (acknowledge ? "stop-and-wait" : "streaming"));
-
+          System.out.println("Received trial configuration: { message size: " + messageSize + " bytes; protocol: " + (acknowledge ? "stop-and-wait" : "streaming") + " }");
           System.out.println("Accepting data transfer...");
 
           long totalBytesRead = 0;
 
           while (totalBytesRead < TOTAL_SIZE) {
             int dataCount = inputStream.read(dataBuffer);
-            System.out.println("Received " + dataCount + " bytes"); // todo: remove
             totalBytesRead += dataCount;
             if (acknowledge) {
-              System.out.println("Sending ack"); // todo: remove
               outputStream.write(ACK_BYTE);
             }
           }
@@ -114,9 +109,7 @@ public class Server {
         if (checksum != applicationMessage[0] + applicationMessage[1]) {
           System.out.println("Improper message from client: bad checksum");
         } else {
-          System.out.println("Client has requested:");
-          System.out.println("Message size: " + messageSize + " bytes");
-          System.out.println("Acknowledgement protocol: " + (acknowledge ? "stop-and-wait" : "streaming"));
+          System.out.println("Received trial configuration: { message size: " + messageSize + " bytes; protocol: " + (acknowledge ? "stop-and-wait" : "streaming") + " }");
 
           System.out.println("Accepting data transfer...");
 
@@ -128,7 +121,6 @@ public class Server {
               System.out.println("Error: message was not agreed-upon size (received " + messagePacket.getLength() + " bytes)");
               break;
             }
-            System.out.println("Received " + messagePacket.getLength() + " bytes"); // todo: remove
             totalBytesRead += messagePacket.getLength();
             if (acknowledge) {
               socket.send(ackPacket);

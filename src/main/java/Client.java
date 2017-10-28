@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Client {
 
-  private static final long TOTAL_SIZE = 1024*10; // 10K
+  private static final long TOTAL_SIZE = 1024*1024*1024; // 1GB
   private static final Integer ACK_BYTE = 123;
 
   public enum TransportProtocol {
@@ -91,14 +91,11 @@ public class Client {
       socket.send(messagePacket);
       count -= outputMessageSize;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
-        System.out.println("Waiting for ack..."); // todo: remove
         socket.receive(ackPacket);
-        System.out.println("Got ack..."); // todo: remove
         if (ackPacket.getData()[0] == ACK_BYTE) {
           continue;
         } else {
           System.err.println("Error: expected ack from server, received something else.");
-          System.err.println("ack received: " + ackPacket.getData()[0]); // todo: remove
           System.exit(1);
         }
       }
@@ -132,17 +129,12 @@ public class Client {
     long start = System.currentTimeMillis();
 
     while (totalBytesSent < TOTAL_SIZE) {
-      System.out.print("Sending " + outputMessageSize + " bytes to server...");
       outputStream.write(outputBuffer);
-      System.out.println("Done.");
       totalBytesSent += outputMessageSize;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
-        System.out.println("Waiting for ack..."); // todo: remove
         int bytesReceived = inputStream.read(inputBuffer);
-        System.out.println("Got " + bytesReceived + " byte ack..."); // todo: remove
         if (inputBuffer[0] != ACK_BYTE) {
           System.err.println("Error: expected ack from server, received something else.");
-          System.err.println("ack received: " + inputBuffer[0]); // todo: remove
           System.exit(1);
         }
       }
