@@ -2,36 +2,41 @@ import java.io.*;
 import java.net.*;
 
 public class Server {
-  public enum Protocol { TCP, UDP };
-  public static final long TOTAL_SIZE = 10;
-  public static final int ACK_BYTE = 255;
+
+  private static final long TOTAL_SIZE = 10;
+  private static final Integer ACK_BYTE = 255;
+
   public static byte[] dataBuffer = new byte[65536];
   public static byte[] applicationMessage = new byte[3];
 
-  public static void main(String[] args) throws java.io.IOException {
-    if (args.length != 2) print_usage();
+  public enum TransportProtocol {
+    TCP,
+    UDP
+  }
 
-    int port = 0;
-    Protocol protocol = Protocol.TCP;
+  public static void main(String[] args) throws IOException {
+    if (args.length != 2) {
+      printUsage();
+    }
 
-    try
-    {
+    int port = 44444;
+    TransportProtocol transportProtocol = TransportProtocol.TCP;
+
+    try {
       port = Integer.parseInt(args[0]);
-      protocol = Protocol.valueOf(args[1].toUpperCase());
-    }
-    catch (Exception e)
-    {
-      print_usage();
+      transportProtocol = TransportProtocol.valueOf(args[1].toUpperCase());
+    } catch (Exception e) {
+      printUsage();
     }
 
-    if (protocol == Protocol.TCP) {
-      run_tcp(port);
+    if (transportProtocol == TransportProtocol.TCP) {
+      runTcp(port);
     } else {
-      run_udp(port);
+      runUdp(port);
     }
   }
 
-  public static void run_tcp(int port) throws java.io.IOException {
+  public static void runTcp(int port) throws IOException {
     System.out.println("Running on port " + port + " over TCP");
     ServerSocket serverSocket = new ServerSocket(port);
 
@@ -43,13 +48,13 @@ public class Server {
       System.out.println("========== Client connected ===========");
       InputStream inputStream = clientSocket.getInputStream();
       OutputStream outputStream = clientSocket.getOutputStream();
-      
+
       int count = inputStream.read(applicationMessage);
       if (count != 3) {
         System.out.println("Error: expected 3 byte message from client (only received " + count + "). Try again.");
       } else {
         System.out.println("Received " + count + " bytes from client.");
-        int messageSize = (int)Math.pow(2, applicationMessage[0]);
+        int messageSize = (int) Math.pow(2, applicationMessage[0]);
         boolean acknowledge = applicationMessage[1] != 0;
         int checksum = applicationMessage[2];
         if (checksum != applicationMessage[0] + applicationMessage[1]) {
@@ -78,7 +83,7 @@ public class Server {
 
           System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
         }
-        
+
       }
 
       clientSocket.close();
@@ -86,12 +91,65 @@ public class Server {
     }
   }
 
-  public static void run_udp(int port) throws java.io.IOException {
+  public static void runUdp(int port) throws IOException {
     System.out.println("Running on port " + port + " over UDP");
+
+    DatagramSocket socket = new DatagramSocket(port);
+    DatagramPacket applicationMessagePacket = new DatagramPacket(applicationMessage, applicationMessage.length);
+    DatagramPacket messagePacket = new DatagramPacket(dataBuffer, dataBuffer.length);
+
+    while(true) {
+      System.out.println("\nWaiting for client to connect...");
+      socket.receive(applicationMessagePacket);
+
+      if (applicationMessagePacket.getLength() != 3) {
+        System.out.println(String.format(
+            "Error: expected 3 byte message from client but only received %d. Try again.",
+            applicationMessagePacket.getLength()));
+      } else {
+        System.out.println("Received " + applicationMessagePacket.getLength() + " bytes from client.");
+        int messageSize = (int) Math.pow(2, applicationMessage[0]);
+        boolean acknowledge = applicationMessage[1] != 0;
+        int checksum = applicationMessage[2];
+
+        byte[] ackByte = { ACK_BYTE.byteValue() };
+        DatagramPacket ackPacket = new DatagramPacket(ackByte, 0, ackByte.length, applicationMessagePacket.getAddress(), port);
+
+
+        if (checksum != applicationMessage[0] + applicationMessage[1]) {
+          System.out.println("Improper message from client: bad checksum");
+        } else {
+          System.out.println("Client has requested:");
+          System.out.println("Message size: " + messageSize + " bytes");
+          System.out.println("Acknowledgement protocol: " + (acknowledge ? "stop-and-wait" : "streaming"));
+
+          System.out.println("Accepting data transfer...");
+
+          long totalBytesRead = 0;
+
+          while (totalBytesRead < TOTAL_SIZE) {
+            socket.receive(messagePacket);
+            if (messagePacket.getLength() != messageSize) {
+              System.out.println("Error: message was not agreed-upon size (received " + messagePacket.getLength() + " bytes)");
+              break;
+            }
+            System.out.println("Received " + messagePacket.getLength() + " bytes"); // todo: remove
+            totalBytesRead += messagePacket.getLength();
+            if (acknowledge) {
+              socket.send(ackPacket);
+            }
+          }
+
+          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
+      }
+
+      socket.close();
+      System.out.println("======== Closed connection to client ==========");
+    }
   }
 
-  public static void print_usage() {
-    System.out.println("Usage: server <port> <transport protocol>");
+  public static void printUsage() {
+    System.out.println("Usage: java Server <port> <transport protocol>");
     System.out.println("transport protocol: \"tcp\" or \"udp\"");
     System.exit(0);
   }
