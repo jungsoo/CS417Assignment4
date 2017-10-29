@@ -58,6 +58,7 @@ public class Client {
     int outputMessageSize = (int) Math.pow(2, messageSize);
 
     System.out.println("Trial configuration: { message size: " + outputMessageSize + " bytes; protocol: " + ackProtocol + " }");
+    
     System.out.print("Sending configuration to server... ");
     byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
     DatagramPacket applicationMessagePacket = new DatagramPacket(
@@ -68,8 +69,6 @@ public class Client {
         port);
     socket.send(applicationMessagePacket);
     System.out.println("Done.");
-
-
 
     DatagramPacket messagePacket = new DatagramPacket(
         new byte[outputMessageSize],
@@ -86,10 +85,12 @@ public class Client {
     System.out.print("Starting data transfer to server... ");
 
     long start = System.currentTimeMillis();
-    long count = TOTAL_SIZE;
-    while (count > 0) {
+    long count = 0;
+    long totalMessagesSent = 0;
+    while (count < TOTAL_SIZE) {
       socket.send(messagePacket);
       count -= outputMessageSize;
+      totalMessagesSent++;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
         socket.receive(ackPacket);
         if (ackPacket.getData()[0] == ACK_BYTE) {
@@ -102,7 +103,7 @@ public class Client {
     }
 
     long end = System.currentTimeMillis();
-    System.out.println("Done (took " + (end-start) + " ms).");
+    System.out.println("Done. Sent " + count + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
   }
 
   private static void runTcp(InetAddress address, int port, AckProtocol ackProtocol, int messageSize)  throws IOException {
@@ -127,10 +128,12 @@ public class Client {
 
     System.out.print("Starting data transfer to server... ");
     long start = System.currentTimeMillis();
+    long totalMessagesSent = 0;
 
     while (totalBytesSent < TOTAL_SIZE) {
       outputStream.write(outputBuffer);
       totalBytesSent += outputMessageSize;
+      totalMessagesSent++;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
         int bytesReceived = inputStream.read(inputBuffer);
         if (inputBuffer[0] != ACK_BYTE) {
@@ -141,9 +144,9 @@ public class Client {
     }
 
     long end = System.currentTimeMillis();
-    System.out.println("Done (took " + (end-start) + " ms).");
+    System.out.println("Done. Sent " + totalBytesSent + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
     socket.close();
-    System.out.println("Goodbye");
+    System.out.println("Connection closed.");
   }
 
   private static byte[] createApplicationMessage(int messageSize, AckProtocol ackProtocol) {

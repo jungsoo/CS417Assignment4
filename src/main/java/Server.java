@@ -52,7 +52,6 @@ public class Server {
       if (count != 3) {
         System.out.println("Error: expected 3 byte message from client (only received " + count + "). Try again.");
       } else {
-        System.out.println("Received " + count + " bytes from client.");
         int messageSize = (int) Math.pow(2, applicationMessage[0]);
         boolean acknowledge = applicationMessage[1] != 0;
         int checksum = applicationMessage[2];
@@ -63,16 +62,18 @@ public class Server {
           System.out.println("Accepting data transfer...");
 
           long totalBytesRead = 0;
+          long totalMessagesRead = 0;
 
           while (totalBytesRead < TOTAL_SIZE) {
             int dataCount = inputStream.read(dataBuffer);
             totalBytesRead += dataCount;
+            totalMessagesRead++;
             if (acknowledge) {
               outputStream.write(ACK_BYTE);
             }
           }
 
-          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
+          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + "messages from client");
         }
       }
 
@@ -114,6 +115,7 @@ public class Server {
           System.out.println("Accepting data transfer...");
 
           long totalBytesRead = 0;
+          long totalMessagesRead = 0;
 
           while (totalBytesRead < TOTAL_SIZE) {
             socket.receive(messagePacket);
@@ -122,12 +124,13 @@ public class Server {
               break;
             }
             totalBytesRead += messagePacket.getLength();
+            totalMessagesRead++;
             if (acknowledge) {
               socket.send(ackPacket);
             }
           }
 
-          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes from client");
+          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + "messages from client");
         }
       }
 
