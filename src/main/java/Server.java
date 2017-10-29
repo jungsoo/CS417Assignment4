@@ -73,7 +73,7 @@ public class Server {
             }
           }
 
-          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + "messages from client");
+          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + " messages from client");
         }
       }
 
@@ -130,7 +130,7 @@ public class Server {
             }
           }
 
-          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + "messages from client");
+          System.out.println("Data transfer complete: read " + totalBytesRead + " bytes in " + totalMessagesRead + " messages from client");
         }
       }
 
