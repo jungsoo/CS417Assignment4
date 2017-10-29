@@ -103,7 +103,8 @@ public class Client {
     }
 
     long end = System.currentTimeMillis();
-    System.out.println("Done. Sent " + count + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
+    System.out.println("Done.");
+    System.out.println("Sent " + count + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
   }
 
   private static void runTcp(InetAddress address, int port, AckProtocol ackProtocol, int messageSize)  throws IOException {
@@ -144,7 +145,8 @@ public class Client {
     }
 
     long end = System.currentTimeMillis();
-    System.out.println("Done. Sent " + totalBytesSent + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
+    System.out.println("Done.");
+    System.out.println("Sent " + totalBytesSent + " bytes in " + totalMessagesSent + " messages (took " + (end-start) + " ms).");
     socket.close();
     System.out.println("Connection closed.");
   }
