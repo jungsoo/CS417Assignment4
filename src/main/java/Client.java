@@ -57,7 +57,10 @@ public class Client {
 
     int outputMessageSize = (int) Math.pow(2, messageSize);
 
-    System.out.println("Trial configuration: { message size: " + outputMessageSize + " bytes; protocol: " + ackProtocol + " }");
+    System.out.println("Trial configuration: { message size: " + 
+            outputMessageSize + 
+            " bytes; protocol: " + 
+            ackProtocol + " }");
     
     System.out.print("Sending configuration to server... ");
     byte[] applicationMessage = createApplicationMessage(messageSize, ackProtocol);
@@ -89,7 +92,7 @@ public class Client {
     long totalMessagesSent = 0;
     while (count < TOTAL_SIZE) {
       socket.send(messagePacket);
-      count -= outputMessageSize;
+      count += outputMessageSize;
       totalMessagesSent++;
       if (ackProtocol == AckProtocol.STOPANDWAIT) {
         socket.receive(ackPacket);

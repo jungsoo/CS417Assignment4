@@ -104,7 +104,12 @@ public class Server {
         int checksum = applicationMessage[2];
 
         byte[] ackByte = {ACK_BYTE.byteValue()};
-        DatagramPacket ackPacket = new DatagramPacket(ackByte, 0, ackByte.length, applicationMessagePacket.getAddress(), port);
+        DatagramPacket ackPacket = new DatagramPacket(
+            ackByte, 
+            0, 
+            ackByte.length, 
+            applicationMessagePacket.getAddress(), 
+            port);
 
 
         if (checksum != applicationMessage[0] + applicationMessage[1]) {
